@@ -3,7 +3,6 @@ from tkinter import ttk
 import subprocess
 import time
 import threading
-import csv
 import os
 import pyautogui
 import keyboard
@@ -17,13 +16,16 @@ movements = []
 cancel_replay = False
 
 
-# Function to start MouseInfo via command line
+# ------------------- MouseInfo and Log Functions -------------------
+
 def start_mouseinfo():
-    status_label.config(text="MouseInfo opened.\nRecord movements using F6 and save the log", foreground="white")
+    """Start MouseInfo via command line."""
+    status_label.config(text="MouseInfo opened. Record movements using F6 and save the log")
     subprocess.Popen(['py', '-m', 'mouseinfo'])
 
 
 def load_log():
+    """Load mouse movements from a text file."""
     global movements
     file_path = filedialog.askopenfilename(title="Select MouseInfo Log", filetypes=[("Text files", "*.txt")])
 
@@ -31,12 +33,7 @@ def load_log():
         movements.clear()
         try:
             with open(file_path, 'r') as file:
-                # Print the content of the file for debugging
-                print(f"Opening file: {file_path}")
                 file_content = file.readlines()
-                print("File content:")
-                for line in file_content:
-                    print(line.strip())
 
                 # Process the file content
                 for line in file_content:
@@ -44,21 +41,15 @@ def load_log():
                     if len(parts) >= 2:
                         try:
                             x, y = int(parts[0].strip()), int(parts[1].strip())
-                            event_type = None
-                            if len(parts) == 3:
-                                event_type = parts[2].strip().lower()  # Capture click type
+                            event_type = parts[2].strip() if len(parts) > 2 else None
                             movements.append([x, y, event_type])
                         except ValueError:
                             status_label.config(text="Error: Invalid coordinates in file.", foreground="red")
                             return
 
-            # Debugging: Print movements list
-            print("Movements loaded:")
-            for move in movements:
-                print(move)
-
             status_label.config(text="Log loaded successfully. Please mark clicks.", foreground="green")
-            mark_clicks()  # Prompt user to add clicks
+            # Prompt user to add clicks
+            mark_clicks()
         except Exception as e:
             status_label.config(text=f"Error loading log file: {e}", foreground="red")
     else:
@@ -73,20 +64,21 @@ def export_log():
     if file_path:
         try:
             with open(file_path, 'w') as file:
-                for movement in movements:
-                    x, y, event_type = movement
-                    if event_type:
-                        file.write(f"{x},{y},{event_type}\n")
-                    else:
-                        file.write(f"{x},{y}\n")
+                for move in movements:
+                    x, y, event_type = move
+                    file.write(f"{x},{y},{event_type if event_type else ''}\n")
             status_label.config(text="Log exported successfully.", foreground="green")
         except Exception as e:
             status_label.config(text=f"Error exporting log: {e}", foreground="red")
 
 
-# Function to mark click events
+# ------------------- Click Marking and Replay Functions -------------------
+
 def mark_clicks():
+    """Mark click events in the loaded mouse movements."""
+
     def add_click(event_type):
+        """Add a click event (left/right) to the selected movement."""
         selected_index = click_listbox.curselection()
         if selected_index:
             idx = selected_index[0]
@@ -96,6 +88,7 @@ def mark_clicks():
             mark_status_label.config(text=f"{event_type.capitalize()} click set at position {idx + 1}")
 
     def remove_click():
+        """Remove a click event from the selected movement."""
         selected_index = click_listbox.curselection()
         if selected_index:
             idx = selected_index[0]
@@ -104,33 +97,8 @@ def mark_clicks():
             click_listbox.insert(idx, f"{movements[idx][0]}, {movements[idx][1]}, No Click")
             mark_status_label.config(text=f"Click removed at position {idx + 1}")
 
-    def move_cursor(x, y):
-        pyautogui.moveTo(x, y)
-        mark_status_label.config(text=f"Moved mouse to {x}, {y}")
-
-    # def on_double_click(event):
-    #     selected_index = click_listbox.curselection()
-    #     if selected_index:
-    #         idx = selected_index[0]
-    #         x, y = movements[idx][0], movements[idx][1]
-    #         move_cursor(x, y)
-
-    def move_cursor_to():
-        selected_index = click_listbox.curselection()
-        if selected_index:
-            idx = selected_index[0]
-            x, y = movements[idx][0], movements[idx][1]
-            move_cursor(x, y)
-
-    def show_context_menu(event):
-        try:
-            click_listbox.selection_clear(0, tk.END)
-            click_listbox.selection_set(click_listbox.nearest(event.y))
-            context_menu.post(event.x_root, event.y_root)
-        finally:
-            context_menu.grab_release()
-
     def delete_item():
+        """Remove a movement event from the list."""
         selected_index = click_listbox.curselection()
         if selected_index:
             idx = selected_index[0]
@@ -138,25 +106,42 @@ def mark_clicks():
             movements.pop(idx)
             mark_status_label.config(text=f"Item at position {idx + 1} deleted.")
 
+    def move_cursor(x, y):
+        """Move cursor."""
+        pyautogui.moveTo(x, y)
+        mark_status_label.config(text=f"Moved mouse to {x}, {y}")
+
+    def move_cursor_to():
+        """Move cursor to the selected coordinates."""
+        selected_index = click_listbox.curselection()
+        if selected_index:
+            idx = selected_index[0]
+            x, y = movements[idx][0], movements[idx][1]
+            move_cursor(x, y)
+
+    def show_context_menu(event):
+        """Show context menu."""
+        try:
+            click_listbox.selection_clear(0, tk.END)
+            click_listbox.selection_set(click_listbox.nearest(event.y))
+            context_menu.post(event.x_root, event.y_root)
+        finally:
+            context_menu.grab_release()
+
     # New window for marking clicks
     click_window = tk.Toplevel(root)
     click_window.title("Mark Click Events")
 
-    # Listbox showing all movement coordinates
+    # Listbox to display movements
     click_listbox = tk.Listbox(click_window, width=50)
     click_listbox.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
 
     # Clear previous items if any
     click_listbox.delete(0, tk.END)
 
-    # Debugging: Print movements to verify correct data
-    print("Movements to display:")
+    # List all movements inside listbox
     for i, move in enumerate(movements):
-        print(f"{move[0]}, {move[1]}, No Click")  # Debug output
         click_listbox.insert(i, f"{move[0]}, {move[1]}, {move[2] if move[2] else 'No'} Click")
-
-    # Bind double-click event to the listbox
-    # click_listbox.bind("<Double-1>", on_double_click)
 
     # Right-click event
     click_listbox.bind("<Button-3>", show_context_menu)
@@ -188,22 +173,8 @@ def mark_clicks():
     close_btn.grid(row=2, column=0, columnspan=2, padx=5, pady=10)
 
 
-# Function to cancel replay
-def cancel_replay_fn():
-    global cancel_replay
-    cancel_replay = True
-    status_label.config(text="Replay cancelled.", foreground="white")
-
-    # Re-enable buttons after cancellation
-    start_btn.config(state=tk.NORMAL)
-    load_log_btn.config(state=tk.NORMAL)
-    replay_btn.config(state=tk.NORMAL)
-    cancel_btn.config(state=tk.DISABLED)
-
-
-# Function to replay the loaded movements
 def replay_movements():
-    global movements
+    """Replay the recorded movements with a delay."""
     global cancel_replay
     try:
         delay = float(delay_entry.get())
@@ -218,16 +189,12 @@ def replay_movements():
             status_label.config(text="No movements recorded or loaded.", foreground="red")
             return
 
-        # Disable buttons while replaying
-        start_btn.config(state=tk.DISABLED)
-        load_log_btn.config(state=tk.DISABLED)
-        replay_btn.config(state=tk.DISABLED)
-        cancel_btn.config(state=tk.NORMAL)
+        toggle_buttons(state=tk.DISABLED)
 
         cancel_replay = False
         status_label.config(text="Replaying movements...", foreground="white")
 
-        # Replaying in a new thread to avoid blocking the GUI
+        # Start replay in a separate thread to avoid blocking the GUI
         def replay_thread():
             for _ in range(repeat_count):
                 for movement in movements:
@@ -243,25 +210,48 @@ def replay_movements():
                         pyautogui.click(button='right')  # Simulate right click
                         time.sleep(delay)
             status_label.config(text="Replay finished.", foreground="green")
-            # Re-enable buttons after replay
-            start_btn.config(state=tk.NORMAL)
-            load_log_btn.config(state=tk.NORMAL)
-            replay_btn.config(state=tk.NORMAL)
-            cancel_btn.config(state=tk.DISABLED)
-            # Focus on the program window after replay finishes
-            # focus_on_window()
+            reset_buttons()
 
         threading.Thread(target=replay_thread).start()
     except ValueError:
-        status_label.config(text="Invalid delay/repeat value", foreground="red")
+        status_label.config(text="Invalid input.", foreground="red")
 
 
-# Function to start listening for the ESC key to close the program
+# ------------------- Utility Functions -------------------
+
+def cancel_replay_fn():
+    """Cancel the current replay and re-enable buttons."""
+    global cancel_replay
+    cancel_replay = True
+    status_label.config(text="Replay cancelled.", foreground="white")
+    reset_buttons()
+
+
+def reset_buttons():
+    """Re-enable buttons after replay or cancellation."""
+    start_btn.config(state=tk.NORMAL)
+    load_log_btn.config(state=tk.NORMAL)
+    replay_btn.config(state=tk.NORMAL)
+    cancel_btn.config(state=tk.DISABLED)
+
+
+def toggle_buttons(state):
+    """Toggle the state of buttons during replay."""
+    start_btn.config(state=state)
+    load_log_btn.config(state=state)
+    replay_btn.config(state=state)
+    cancel_btn.config(state=tk.NORMAL if state == tk.DISABLED else state)
+
+
+# ------------------- ESC Hotkey Listener -------------------
+
 def esc_hotkey_listener():
-    keyboard.add_hotkey('esc', root.quit)
+    """Listen for 'Esc' key press to cancel the replay."""
+    keyboard.add_hotkey('esc', cancel_replay_fn)
 
 
-# GUI Setup
+# ------------------- GUI Setup -------------------
+
 root = tk.Tk()
 root.title("Mouse Recorder with MouseInfo")
 
@@ -277,8 +267,6 @@ style.configure('Custom.TButton',
                 relief='flat')
 
 style.map('Custom.TButton',
-          # background=[('active', '#2980b9')],  # Color when hovered
-          # foreground=[('active', 'white')],
           state=[('disabled', '#d3d3d3')])  # Grey color when disabled
 
 # Define custom style for start button
@@ -289,8 +277,6 @@ style.configure('Start.TButton',
                 relief='flat')
 
 style.map('Custom.TButton',
-          # background=[('active', '#2980b9')],  # Color when hovered
-          # foreground=[('active', 'white')],
           state=[('disabled', '#d3d3d3')])  # Grey color when disabled
 
 # Define custom style for cancel button
@@ -301,12 +287,10 @@ style.configure('Cancel.TButton',
                 relief='flat')
 
 style.map('Cancel.TButton',
-          # background=[('active', '#ff4d4d')],  # Color when hovered
-          # foreground=[('active', 'white')],
           state=[('disabled', '#d3d3d3')])  # Grey color when disabled
 
 # Delay Input
-delay_label = ttkb.Label(root, text="Delay in seconds before Click:")
+delay_label = ttkb.Label(root, text="Delay in seconds before Clicks:")
 delay_label.grid(row=0, column=0, padx=10, pady=10)
 
 delay_entry = ttkb.Entry(root)
@@ -340,7 +324,7 @@ cancel_btn.config(state=tk.DISABLED)  # Initially disabled
 status_label = ttkb.Label(root, text="")
 status_label.grid(row=6, column=0, columnspan=2, padx=10, pady=10)
 
-# Start ESC hotkey listener
+# Start the Esc listener
 esc_hotkey_listener()
 
 root.mainloop()
