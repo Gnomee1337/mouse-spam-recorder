@@ -19,7 +19,7 @@ cancel_replay = False
 
 # Function to start MouseInfo via command line
 def start_mouseinfo():
-    status_label.config(text="MouseInfo opened. Record movements and save the log using F1-F6.")
+    status_label.config(text="MouseInfo opened. Record movements and save the log using F1-F6.", foreground="white")
     subprocess.Popen(['py', '-m', 'mouseinfo'])
 
 
@@ -47,7 +47,7 @@ def load_log():
                             event_type = None
                             movements.append([x, y, event_type])
                         except ValueError:
-                            status_label.config(text="Error: Invalid coordinates in file.")
+                            status_label.config(text="Error: Invalid coordinates in file.",foreground="red")
                             return
 
             # Debugging: Print movements list
@@ -55,12 +55,12 @@ def load_log():
             for move in movements:
                 print(move)
 
-            status_label.config(text="Log loaded successfully. Please mark clicks.")
+            status_label.config(text="Log loaded successfully. Please mark clicks.", foreground="green")
             mark_clicks()  # Prompt user to add clicks
         except Exception as e:
-            status_label.config(text=f"Error loading log file: {e}")
+            status_label.config(text=f"Error loading log file: {e}", foreground="red")
     else:
-        status_label.config(text="Failed to load log file.")
+        status_label.config(text="Failed to load log file.", foreground="red")
 
 
 # Function to mark click events
@@ -74,13 +74,48 @@ def mark_clicks():
             click_listbox.insert(idx, f"{movements[idx][0]}, {movements[idx][1]}, {event_type.capitalize()} Click")
             mark_status_label.config(text=f"{event_type.capitalize()} click set at position {idx + 1}")
 
-    def on_double_click(event):
+    def remove_click():
+        selected_index = click_listbox.curselection()
+        if selected_index:
+            idx = selected_index[0]
+            movements[idx][2] = None
+            click_listbox.delete(idx)
+            click_listbox.insert(idx, f"{movements[idx][0]}, {movements[idx][1]}, No Click")
+            mark_status_label.config(text=f"Click removed at position {idx + 1}")
+
+    def move_cursor(x, y):
+        pyautogui.moveTo(x, y)
+        mark_status_label.config(text=f"Moved mouse to {x}, {y}")
+
+    # def on_double_click(event):
+    #     selected_index = click_listbox.curselection()
+    #     if selected_index:
+    #         idx = selected_index[0]
+    #         x, y = movements[idx][0], movements[idx][1]
+    #         move_cursor(x, y)
+
+    def move_cursor_to():
         selected_index = click_listbox.curselection()
         if selected_index:
             idx = selected_index[0]
             x, y = movements[idx][0], movements[idx][1]
-            pyautogui.moveTo(x, y)
-            mark_status_label.config(text=f"Moved mouse to {x}, {y}")
+            move_cursor(x, y)
+
+    def show_context_menu(event):
+        try:
+            click_listbox.selection_clear(0, tk.END)
+            click_listbox.selection_set(click_listbox.nearest(event.y))
+            context_menu.post(event.x_root, event.y_root)
+        finally:
+            context_menu.grab_release()
+
+    def delete_item():
+        selected_index = click_listbox.curselection()
+        if selected_index:
+            idx = selected_index[0]
+            click_listbox.delete(idx)
+            movements.pop(idx)
+            mark_status_label.config(text=f"Item at position {idx + 1} deleted.")
 
     # New window for marking clicks
     click_window = tk.Toplevel(root)
@@ -100,14 +135,20 @@ def mark_clicks():
         click_listbox.insert(i, f"{move[0]}, {move[1]}, No Click")
 
     # Bind double-click event to the listbox
-    click_listbox.bind("<Double-1>", on_double_click)
+    # click_listbox.bind("<Double-1>", on_double_click)
 
-    # Buttons to mark clicks
-    left_click_btn = ttkb.Button(click_window, text="Add Left Click", command=lambda: add_click('left'))
-    left_click_btn.grid(row=1, column=0, padx=5, pady=5)
+    # Right-click event
+    click_listbox.bind("<Button-3>", show_context_menu)
 
-    right_click_btn = ttkb.Button(click_window, text="Add Right Click", command=lambda: add_click('right'))
-    right_click_btn.grid(row=1, column=1, padx=5, pady=5)
+    # Create context menu
+    context_menu = tk.Menu(click_window, tearoff=0)
+    context_menu.add_command(label="Add Left Click", command=lambda: add_click('left'))
+    context_menu.add_command(label="Add Right Click", command=lambda: add_click('right'))
+    context_menu.add_command(label="Remove Click", command=remove_click)
+    context_menu.add_separator()
+    context_menu.add_command(label="Move Cursor To", command=move_cursor_to)
+    context_menu.add_separator()
+    context_menu.add_command(label="Delete Item", command=delete_item)
 
     # Status Label for information
     mark_status_label = ttkb.Label(click_window, text="")
@@ -116,7 +157,7 @@ def mark_clicks():
     # Save and close the window after marking clicks
     def close_click_window():
         click_window.destroy()
-        status_label.config(text="Clicks marked. Ready for replay.")
+        status_label.config(text="Clicks marked. Ready for replay.", foreground="white")
 
     close_btn = ttkb.Button(click_window, text="Save and Close", command=close_click_window)
     close_btn.grid(row=2, column=0, columnspan=2, padx=5, pady=10)
@@ -152,14 +193,14 @@ def replay_movements():
         cancel_btn.config(state=tk.NORMAL)
 
         cancel_replay = False
-        status_label.config(text="Replaying movements...")
+        status_label.config(text="Replaying movements...", foreground="white")
 
         # Replaying in a new thread to avoid blocking the GUI
         def replay_thread():
             for _ in range(repeat_count):
                 for movement in movements:
                     if cancel_replay:
-                        status_label.config(text="Replay cancelled.")
+                        status_label.config(text="Replay cancelled.", foreground="white")
                         return
                     x, y, event_type = movement  # Unpack x, y, and event_type
                     pyautogui.moveTo(x, y)  # Move to recorded position
@@ -169,7 +210,7 @@ def replay_movements():
                     elif event_type == 'right':
                         pyautogui.click(button='right')  # Simulate right click
                         time.sleep(delay)
-            status_label.config(text="Replay finished.")
+            status_label.config(text="Replay finished.", foreground="green")
             # Re-enable buttons after replay
             start_btn.config(state=tk.NORMAL)
             load_log_btn.config(state=tk.NORMAL)
