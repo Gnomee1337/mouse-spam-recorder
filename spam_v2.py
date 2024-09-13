@@ -71,8 +71,16 @@ def mark_clicks():
             idx = selected_index[0]
             movements[idx][2] = event_type
             click_listbox.delete(idx)
-            click_listbox.insert(idx, f"{movements[idx][0]}, {movements[idx][1]} - {event_type.capitalize()} Click")
-            status_label.config(text=f"{event_type.capitalize()} click set at position {idx + 1}")
+            click_listbox.insert(idx, f"{movements[idx][0]}, {movements[idx][1]}, {event_type.capitalize()} Click")
+            mark_status_label.config(text=f"{event_type.capitalize()} click set at position {idx + 1}")
+
+    def on_double_click(event):
+        selected_index = click_listbox.curselection()
+        if selected_index:
+            idx = selected_index[0]
+            x, y = movements[idx][0], movements[idx][1]
+            pyautogui.moveTo(x, y)
+            mark_status_label.config(text=f"Moved mouse to {x}, {y}")
 
     # New window for marking clicks
     click_window = tk.Toplevel(root)
@@ -88,15 +96,22 @@ def mark_clicks():
     # Debugging: Print movements to verify correct data
     print("Movements to display:")
     for i, move in enumerate(movements):
-        print(f"{move[0]}, {move[1]} - No Click")  # Debug output
-        click_listbox.insert(i, f"{move[0]}, {move[1]} - No Click")
+        print(f"{move[0]}, {move[1]}, No Click")  # Debug output
+        click_listbox.insert(i, f"{move[0]}, {move[1]}, No Click")
+
+    # Bind double-click event to the listbox
+    click_listbox.bind("<Double-1>", on_double_click)
 
     # Buttons to mark clicks
-    left_click_btn = ttkb.Button(click_window, text="Mark Left Click", command=lambda: add_click('left'))
+    left_click_btn = ttkb.Button(click_window, text="Add Left Click", command=lambda: add_click('left'))
     left_click_btn.grid(row=1, column=0, padx=5, pady=5)
 
-    right_click_btn = ttkb.Button(click_window, text="Mark Right Click", command=lambda: add_click('right'))
+    right_click_btn = ttkb.Button(click_window, text="Add Right Click", command=lambda: add_click('right'))
     right_click_btn.grid(row=1, column=1, padx=5, pady=5)
+
+    # Status Label for information
+    mark_status_label = ttkb.Label(click_window, text="")
+    mark_status_label.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
     # Save and close the window after marking clicks
     def close_click_window():
@@ -117,17 +132,17 @@ def cancel_replay_fn():
 def replay_movements():
     global movements
     global cancel_replay
-    if not movements:
-        status_label.config(text="No movements loaded.")
-        return
     try:
         delay = float(delay_entry.get())
         repeat_count = int(repeat_entry.get())
         if delay < 0:
-            status_label.config(text="Delay cannot be negative.")
+            status_label.config(text="Delay cannot be negative.", foreground="red")
+            return
+        if repeat_count <= 0:
+            status_label.config(text="Repeat count cannot be negative.", foreground="red")
             return
         if not movements:
-            status_label.config(text="No movements recorded or loaded.")
+            status_label.config(text="No movements recorded or loaded.", foreground="red")
             return
 
         # Disable buttons while replaying
@@ -155,20 +170,17 @@ def replay_movements():
                         pyautogui.click(button='right')  # Simulate right click
                         time.sleep(delay)
             status_label.config(text="Replay finished.")
-
             # Re-enable buttons after replay
             start_btn.config(state=tk.NORMAL)
             load_log_btn.config(state=tk.NORMAL)
             replay_btn.config(state=tk.NORMAL)
             cancel_btn.config(state=tk.DISABLED)
-
             # Focus on the program window after replay finishes
             # focus_on_window()
 
         threading.Thread(target=replay_thread).start()
-
     except ValueError:
-        status_label.config(text="Invalid delay/repeat value. Please enter a valid number.")
+        status_label.config(text="Invalid delay/repeat value", foreground="red")
 
 
 # Function to start listening for the ESC key to close the program
@@ -192,8 +204,20 @@ style.configure('Custom.TButton',
                 relief='flat')
 
 style.map('Custom.TButton',
-          background=[('active', '#2980b9')],  # Color when hovered
-          foreground=[('active', 'white')],
+          # background=[('active', '#2980b9')],  # Color when hovered
+          # foreground=[('active', 'white')],
+          state=[('disabled', '#d3d3d3')])  # Grey color when disabled
+
+# Define custom style for start button
+style.configure('Start.TButton',
+                background='green',  # Button color
+                foreground='white',
+                borderwidth=2,
+                relief='flat')
+
+style.map('Custom.TButton',
+          # background=[('active', '#2980b9')],  # Color when hovered
+          # foreground=[('active', 'white')],
           state=[('disabled', '#d3d3d3')])  # Grey color when disabled
 
 # Define custom style for cancel button
@@ -204,13 +228,12 @@ style.configure('Cancel.TButton',
                 relief='flat')
 
 style.map('Cancel.TButton',
-          background=[('active', '#ff4d4d')],  # Color when hovered
-          foreground=[('active', 'white')],
+          # background=[('active', '#ff4d4d')],  # Color when hovered
+          # foreground=[('active', 'white')],
           state=[('disabled', '#d3d3d3')])  # Grey color when disabled
 
-
 # Delay Input
-delay_label = ttkb.Label(root, text="Set Delay (seconds) before Clicks:")
+delay_label = ttkb.Label(root, text="Delay in seconds before Clicks:")
 delay_label.grid(row=0, column=0, padx=10, pady=10)
 
 delay_entry = ttkb.Entry(root)
@@ -224,25 +247,25 @@ repeat_entry = ttk.Entry(root)
 repeat_entry.grid(row=1, column=1, padx=10, pady=10)
 
 # Start Recording (opens MouseInfo)
-start_btn = ttkb.Button(root, text="Start Recording (MouseInfo)", command=start_mouseinfo, style='Custom.TButton')
-start_btn.grid(row=2, column=0, padx=10, pady=10)
+start_btn = ttkb.Button(root, text="Record Movements (MouseInfo)", command=start_mouseinfo, style='Custom.TButton')
+start_btn.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
 # Load Log Button
-load_log_btn = ttkb.Button(root, text="Load Log", command=load_log, style='Custom.TButton')
-load_log_btn.grid(row=2, column=1, padx=10, pady=10)
+load_log_btn = ttkb.Button(root, text="Load Coordinates", command=load_log, style='Custom.TButton')
+load_log_btn.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
 # Replay Button
-replay_btn = ttkb.Button(root, text="Replay Movements", command=replay_movements, style='Custom.TButton')
-replay_btn.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+replay_btn = ttkb.Button(root, text="Start Replay", command=replay_movements, style='Start.TButton')
+replay_btn.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
 
 # Cancel Replay Button
 cancel_btn = ttkb.Button(root, text="Cancel Replay", command=cancel_replay_fn, style='Cancel.TButton')
-cancel_btn.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+cancel_btn.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 cancel_btn.config(state=tk.DISABLED)  # Initially disabled
 
 # Status Label
 status_label = ttkb.Label(root, text="")
-status_label.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
+status_label.grid(row=6, column=0, columnspan=2, padx=10, pady=10)
 
 # Start ESC hotkey listener
 esc_hotkey_listener()
