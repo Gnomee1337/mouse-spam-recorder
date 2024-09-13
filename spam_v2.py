@@ -19,7 +19,7 @@ cancel_replay = False
 
 # Function to start MouseInfo via command line
 def start_mouseinfo():
-    status_label.config(text="MouseInfo opened. Record movements and save the log using F1-F6.", foreground="white")
+    status_label.config(text="MouseInfo opened.\nRecord movements using F6 and save the log", foreground="white")
     subprocess.Popen(['py', '-m', 'mouseinfo'])
 
 
@@ -45,9 +45,11 @@ def load_log():
                         try:
                             x, y = int(parts[0].strip()), int(parts[1].strip())
                             event_type = None
+                            if len(parts) == 3:
+                                event_type = parts[2].strip().lower()  # Capture click type
                             movements.append([x, y, event_type])
                         except ValueError:
-                            status_label.config(text="Error: Invalid coordinates in file.",foreground="red")
+                            status_label.config(text="Error: Invalid coordinates in file.", foreground="red")
                             return
 
             # Debugging: Print movements list
@@ -61,6 +63,25 @@ def load_log():
             status_label.config(text=f"Error loading log file: {e}", foreground="red")
     else:
         status_label.config(text="Failed to load log file.", foreground="red")
+
+
+def export_log():
+    file_path = filedialog.asksaveasfilename(defaultextension=".txt",
+                                             filetypes=[("Text files", "*.txt")],
+                                             title="Save Coordinates Log")
+
+    if file_path:
+        try:
+            with open(file_path, 'w') as file:
+                for movement in movements:
+                    x, y, event_type = movement
+                    if event_type:
+                        file.write(f"{x},{y},{event_type}\n")
+                    else:
+                        file.write(f"{x},{y}\n")
+            status_label.config(text="Log exported successfully.", foreground="green")
+        except Exception as e:
+            status_label.config(text=f"Error exporting log: {e}", foreground="red")
 
 
 # Function to mark click events
@@ -132,7 +153,7 @@ def mark_clicks():
     print("Movements to display:")
     for i, move in enumerate(movements):
         print(f"{move[0]}, {move[1]}, No Click")  # Debug output
-        click_listbox.insert(i, f"{move[0]}, {move[1]}, No Click")
+        click_listbox.insert(i, f"{move[0]}, {move[1]}, {move[2] if move[2] else 'No'} Click")
 
     # Bind double-click event to the listbox
     # click_listbox.bind("<Double-1>", on_double_click)
@@ -149,6 +170,10 @@ def mark_clicks():
     context_menu.add_command(label="Move Cursor To", command=move_cursor_to)
     context_menu.add_separator()
     context_menu.add_command(label="Delete Item", command=delete_item)
+
+    # Export Button
+    export_btn = ttkb.Button(click_window, text="Export Log", command=export_log)
+    export_btn.grid(row=4, column=1, padx=10, pady=10, sticky='se')
 
     # Status Label for information
     mark_status_label = ttkb.Label(click_window, text="")
@@ -167,6 +192,13 @@ def mark_clicks():
 def cancel_replay_fn():
     global cancel_replay
     cancel_replay = True
+    status_label.config(text="Replay cancelled.", foreground="white")
+
+    # Re-enable buttons after cancellation
+    start_btn.config(state=tk.NORMAL)
+    load_log_btn.config(state=tk.NORMAL)
+    replay_btn.config(state=tk.NORMAL)
+    cancel_btn.config(state=tk.DISABLED)
 
 
 # Function to replay the loaded movements
@@ -274,14 +306,14 @@ style.map('Cancel.TButton',
           state=[('disabled', '#d3d3d3')])  # Grey color when disabled
 
 # Delay Input
-delay_label = ttkb.Label(root, text="Delay in seconds before Clicks:")
+delay_label = ttkb.Label(root, text="Delay in seconds before Click:")
 delay_label.grid(row=0, column=0, padx=10, pady=10)
 
 delay_entry = ttkb.Entry(root)
 delay_entry.grid(row=0, column=1, padx=10, pady=10)
 
 # Repeat Entry
-repeat_label = ttk.Label(root, text="Repeat Count:")
+repeat_label = ttk.Label(root, text="Repeat Counter:")
 repeat_label.grid(row=1, column=0, padx=10, pady=10)
 
 repeat_entry = ttk.Entry(root)
