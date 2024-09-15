@@ -30,10 +30,10 @@ jobs:
            pyinstaller --onefile --windowed --hidden-import=mouseinfo spam_v2.py
         
       - name: List dist directory
-        run: ls -R dist
+        run: ls -R dist/spam_v2
 
       - name: Upload executable
         uses: actions/upload-artifact@v3
         with:
           name: executable
-          path: dist/spam_v2/spam_v2.exe
+          path: dist/spam_v2
