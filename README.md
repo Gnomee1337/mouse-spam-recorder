@@ -1,4 +1,4 @@
-# Spam Mouse Bot
+# Mouse Spam Recorder
 
 Program for recording mouse movements + clicks and their automatic playback
 
