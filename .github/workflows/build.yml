@@ -27,7 +27,7 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --onefile --windowed --hidden-import=mouseinfo --icon=icon.ico .\spam_v2.py
+          pyinstaller --onefile --windowed --hidden-import=mouseinfo .\spam_v2.py
 
       - name: List dist directory
         run: dir dist
