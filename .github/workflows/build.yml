@@ -1,15 +1,15 @@
-name: Build Executable
+name: Build and Release
 
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main
   release:
     types: [published]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -27,13 +27,13 @@ jobs:
 
       - name: Build executable
         run: |
-           pyinstaller --onefile --windowed --hidden-import=mouseinfo spam_v2.py
-        
+          pyinstaller --onefile --windowed --hidden-import=mouseinfo --icon=icon.ico .\spam_v2.py
+
       - name: List dist directory
-        run: ls -R dist/spam_v2
+        run: dir dist
 
       - name: Upload executable
         uses: actions/upload-artifact@v3
         with:
           name: executable
-          path: dist/spam_v2
+          path: dist/spam_v2.exe
