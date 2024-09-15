@@ -1,0 +1,36 @@
+name: Build Executable
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable
+        run: |
+           pyinstaller --onefile --windowed --hidden-import=mouseinfo
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: executable
+          path: dist/your_script
