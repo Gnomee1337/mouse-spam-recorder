@@ -36,4 +36,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: executable
-          path: dist/spam_v2.exe
+          path: dist/spam_v2/spam_v2.exe
