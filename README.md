@@ -2,7 +2,7 @@
 
 Program for recording mouse movements + clicks and their automatic playback
 
-<img src="https://i.imgur.com/7e5DCqF.jpeg" width="700" height="300"/>
+<img src="https://i.imgur.com/7e5DCqF.jpeg"/>
 
 # How to use:
 1. After starting the program use the button “Record Movements” which will open the utility “MouseInfo”.
