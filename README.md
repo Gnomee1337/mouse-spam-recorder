@@ -31,17 +31,20 @@ After importing the coordinates, a window will appear where you can automate mou
 
 To cancel, you can click the “Cancel Replay” button or use the “ESC” hotkey on the keyboard.
 
+# Release:
+Download [Version 1.0](https://github.com/Gnomee1337/mouse-spam-recorder/releases/tag/v1.0)
 
-# Setup:
+# Or Setup:
 ```
 $ pip install -r requirements.txt
-```
-
-# Build executable:
-```
-$ pyinstaller --onefile --windowed --hidden-import=mouseinfo --icon=icon.ico .\spam_v2.py
 ```
 
 # Usage:
 ```
 $ python spam_v2.py
+```
+
+# Build executable:
+```
+$ pyinstaller --onefile --windowed --hidden-import=mouseinfo .\spam_v2.py
+```
