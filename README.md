@@ -1,46 +1,56 @@
 # Mouse Spam Recorder
 
-Program for recording mouse movements + clicks and their automatic playback
+A tool to record and replay mouse movements and clicks automatically.
 
 <img src="https://i.imgur.com/7e5DCqF.jpeg"/>
 
-# How to use:
-1. After starting the program use the button “Record Movements” which will open the utility “MouseInfo”.
+## Features
+- Record mouse cursor positions using `MouseInfo`
+- Save and load custom movement sequences
+- Automate repeated mouse clicks with customizable delay
+- Cancel playback at any time
 
-The “MouseInfo” utility is designed to record the coordinates of the mouse cursor location in Windows.
+---
 
-In the “MouseInfo” utility uncheck the “3 Sec.Button Delay” checkbox and set the mouse cursor to the desired location by pressing the “Log XY (F6)” button.
+## 📖 How to Use
+### 1. Record Mouse Movements
+- Open the app and click **"Record Movements"**.
+- This launches the `MouseInfo` utility (used to log mouse coordinates).
+- In `MouseInfo`:
+  - **Uncheck** the `3 Sec. Button Delay` checkbox.
+  - Move your mouse to the desired spot and press **"Log XY (F6)"**.
+  - Repeat to log multiple positions.
+- Click **"Save Log"** to export your coordinates and close `MouseInfo`.
 
-After that the XY coordinates of the last cursor position will appear in the “MouseInfo” utility. 
+### 2. Load Coordinates
+- Click **"Load Coordinates"** in the main program.
+- A window appears with your logged positions.
+- Here, you can:
+  - Add right clicks
+  - Edit or remove coordinates
+- Click **"Save and Close"** when done.
 
-Record the cursor coordinates the required number of times. 
+### 3. Set Replay Settings
+- In the main window:
+  - Set the **delay** (in seconds) between each click.
+  - Set the **number of repetitions** for the sequence.
 
-2. When you are ready in the “MouseInfo” utility, click the “Save Log” button to export the recorded mouse coordinates. 
+### 4. Start Automation
+- Click **"Start Replay"** to begin.
+- To cancel:
+  - Click **"Cancel Replay"**, or
+  - Press the **`ESC` key** on your keyboard.
 
-You can close the “MouseInfo” utility. 
+---
 
-3. Now click “Load Coordinates” button in the program to import the recorded coordinates. 
+## 🚀 Installation
 
-After importing the coordinates, a window will appear where you can automate mouse clicks (Right click on the desired coordinates) or change them. 
+### Option 1: Download Release
+Grab the latest build: [Download v1.0](https://github.com/Gnomee1337/mouse-spam-recorder/releases/tag/v1.0)
 
-4. After that click the “Save and Close” button. 
-
-5. Now in the main window specify the “Delay” before each mouse click in seconds, as well as the number of repetitions of the recorded algorithm.
-
-6. When you are ready, click “Start Replay” button to start the automation.
-
-To cancel, you can click the “Cancel Replay” button or use the “ESC” hotkey on the keyboard.
-
-# Release:
-Download [Version 1.0](https://github.com/Gnomee1337/mouse-spam-recorder/releases/tag/v1.0)
-
-# Or Setup:
-```
+### Option 2: Run from Source
+```bash
 $ pip install -r requirements.txt
-```
-
-# Usage:
-```
 $ python spam_v2.py
 ```
 
