@@ -58,3 +58,16 @@ $ python spam_v2.py
 ```
 $ pyinstaller --onefile --windowed --hidden-import=mouseinfo .\spam_v2.py
 ```
+
+# Security Disclaimer
+
+This repository contains software that may be capable of interacting with remote services, automating actions, or performing security-related operations.
+
+The project is intended exclusively for:
+- Educational purposes
+- Security research
+- Testing systems you own or are explicitly authorized to test
+
+Do **not** use this software against systems, networks, or services without prior authorization.
+
+The authors assume no liability for misuse or any damages resulting from the use of this software.
